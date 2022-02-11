@@ -3,9 +3,8 @@ package net.nerrog.velocitysafe.velocitysafe.Data;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.nerrog.velocitysafe.velocitysafe.VelocitySafe;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
 
 public class DataLoader {
 
@@ -28,7 +27,9 @@ public class DataLoader {
             VelocitySafe.logger.info("Loading whitelist...");
             ObjectMapper mapper = new ObjectMapper();
             try {
-                data d = mapper.readValue(new File("./whitelist_safe.json"), data.class);
+                //そのまま読むと文字化けする可能性があるのでBufferedReaderを使う
+                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(new FileInputStream("./whitelist_safe.json"), StandardCharsets.UTF_8));
+                data d = mapper.readValue(bufferedReader, data.class);
                 VelocitySafe.logger.info("Successful loading whitelist!");
                 return d;
             } catch (IOException e) {
@@ -124,9 +125,12 @@ public class DataLoader {
 
     public static void writeWhitelist(data data) throws IOException {
         String json = new ObjectMapper().writeValueAsString(data);
-        FileWriter fileWriter = new FileWriter("./whitelist_safe.json");
-        fileWriter.write(json);
-        fileWriter.close();
-        VelocitySafe.logger.info("Write json to ./whitelist_safe.json !");
+        //書き込み
+        File file = new File("./whitelist_safe.json");
+        BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8));
+        bufferedWriter.write(json);
+        bufferedWriter.close();
+
+        VelocitySafe.logger.info("Wrote whitelist!");
     }
 }

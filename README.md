@@ -22,3 +22,4 @@ we strongly recommend using `Velocity modern forwarding` or `BungeeGuard`, or st
 
 # Todo
 - Enhanced TAB completion for remove command.
+- Changing the timing of UUID acquisition in Bedrock and Java
