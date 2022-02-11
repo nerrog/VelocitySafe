@@ -22,4 +22,3 @@ we strongly recommend using `Velocity modern forwarding` or `BungeeGuard`, or st
 
 # Todo
 - Enhanced TAB completion for remove command.
-- Make it work even if the player name is changed.

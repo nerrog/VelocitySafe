@@ -9,7 +9,6 @@ import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.proxy.ProxyServer;
 import net.kyori.adventure.text.Component;
-import net.md_5.bungee.api.ChatColor;
 import net.nerrog.velocitysafe.velocitysafe.Data.DataLoader;
 import net.nerrog.velocitysafe.velocitysafe.Data.data;
 import net.nerrog.velocitysafe.velocitysafe.Data.commands.vwhitelist;
@@ -18,11 +17,12 @@ import org.slf4j.Logger;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Plugin(
         id = "velocitysafe",
         name = "VelocitySafe",
-        version = "1.0-SNAPSHOT",
+        version = "1.1-SNAPSHOT",
         description = "Whitelist for Velocity",
         authors = {"nerrog"}
 )
@@ -97,6 +97,12 @@ public class VelocitySafe {
                             isWhitelisted = false;
                         }
                     }
+                }else if (e.getPlayer().getUniqueId().equals(UUID.fromString(p.uuid))){
+                    //ユーザーネーム不一致だがUUIDが一致していた場合
+                    isWhitelisted = true;
+                    //設定のユーザー名を修正して保存
+                    whitelist.players.get(whitelist.players.indexOf(p)).name = e.getPlayer().getUsername();
+                    DataLoader.writeWhitelist(whitelist);
                 }
             }
 
@@ -106,7 +112,7 @@ public class VelocitySafe {
                     }
                     //ホワリスに無かったら蹴る
                     logger.info("Kicked " + e.getPlayer().getUsername() + " from " + e.getPlayer().getRemoteAddress().getAddress().toString() + " reason:" + reason);
-                    e.setResult(ResultedEvent.ComponentResult.denied(Component.text(ChatColor.translateAlternateColorCodes('&', whitelist.NotwhitelistedMessage))));
+                    e.setResult(ResultedEvent.ComponentResult.denied(Component.text(whitelist.NotwhitelistedMessage.replace("&", "§"))));
                 } else {
                     e.setResult(ResultedEvent.ComponentResult.allowed());
                 }
