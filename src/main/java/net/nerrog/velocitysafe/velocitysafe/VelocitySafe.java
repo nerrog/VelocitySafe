@@ -22,7 +22,7 @@ import java.util.UUID;
 @Plugin(
         id = "velocitysafe",
         name = "VelocitySafe",
-        version = "1.1-SNAPSHOT",
+        version = "1.1.1-SNAPSHOT",
         description = "Whitelist for Velocity",
         authors = {"nerrog"}
 )
@@ -73,38 +73,39 @@ public class VelocitySafe {
     }
 
     @Subscribe
-    public void joinPlayer(LoginEvent e) throws IOException {
+    public void joinPlayer(LoginEvent e) {
         //ホワリスのonがtrueなら実行
         if (whitelist.on) {
             boolean isWhitelisted = false;
             String reason = "";
 
-            //検証
-            for (data.playersJSON p : whitelist.players) {
-                if (p.name.equals(e.getPlayer().getUsername())) {
-                    if (p.uuid.equals("")) {
-                        //uuidが未登録なら
-                        whitelist.players.get(whitelist.players.indexOf(p)).uuid = String.valueOf(e.getPlayer().getUniqueId());
-                        DataLoader.writeWhitelist(whitelist);
-                        isWhitelisted = true;
-
-                    } else {
-                        //uuidの検証
-                        if (p.uuid.equals(e.getPlayer().getUniqueId().toString())) {
+            try{
+                //検証
+                for (data.playersJSON p : whitelist.players) {
+                    if (p.name.equals(e.getPlayer().getUsername())) {
+                        if (p.uuid.equals("")) {
+                            //uuidが未登録なら
+                            whitelist.players.get(whitelist.players.indexOf(p)).uuid = String.valueOf(e.getPlayer().getUniqueId());
+                            DataLoader.writeWhitelist(whitelist);
                             isWhitelisted = true;
+
                         } else {
-                            reason = "uuid is not match";
-                            isWhitelisted = false;
+                            //uuidの検証
+                            if (p.uuid.equals(e.getPlayer().getUniqueId().toString())) {
+                                isWhitelisted = true;
+                            } else {
+                                reason = "uuid is not match";
+                                isWhitelisted = false;
+                            }
                         }
+                    }else if (e.getPlayer().getUniqueId().toString().equals(p.uuid)){
+                        //ユーザーネーム不一致だがUUIDが一致していた場合
+                        isWhitelisted = true;
+                        //設定のユーザー名を修正して保存
+                        whitelist.players.get(whitelist.players.indexOf(p)).name = e.getPlayer().getUsername();
+                        DataLoader.writeWhitelist(whitelist);
                     }
-                }else if (e.getPlayer().getUniqueId().equals(UUID.fromString(p.uuid))){
-                    //ユーザーネーム不一致だがUUIDが一致していた場合
-                    isWhitelisted = true;
-                    //設定のユーザー名を修正して保存
-                    whitelist.players.get(whitelist.players.indexOf(p)).name = e.getPlayer().getUsername();
-                    DataLoader.writeWhitelist(whitelist);
                 }
-            }
 
                 if (!isWhitelisted) {
                     if (reason.equals("")) {
@@ -116,6 +117,24 @@ public class VelocitySafe {
                 } else {
                     e.setResult(ResultedEvent.ComponentResult.allowed());
                 }
+            }catch (IOException exception){
+                //IOExceptionは主に構成ファイルへの書き込み時に発生するのでprintだけして通す
+                //MEMO: インスタンス変数として構成ファイルはメモリーにロードされてるので読み込み時にエラーが発生することはおそらく無い
+                logger.error("VelocitySafe IO error!");
+                logger.error("---BEGIN STACK TRACE---");
+                exception.printStackTrace();
+                logger.error("---END STACK TRACE---");
+                e.setResult(ResultedEvent.ComponentResult.allowed());
+
+            }catch (Exception exception){
+                //事故防止
+                e.setResult(ResultedEvent.ComponentResult.denied(Component.text("VelocitySafe internal error\nPlease contact your administrator")));
+                logger.error("VelocitySafe internal error!");
+                logger.error("---BEGIN STACK TRACE---");
+                exception.printStackTrace();
+                logger.error("---END STACK TRACE---");
+            }
+
         }
     }
 }
